@@ -11,6 +11,7 @@ namespace Com.Sungjin.FPSpractice
         public float sprintModifier;
         public Camera normalCam;
         public Transform groundDetector;
+        public Transform orientation;
         public LayerMask ground;
         public float jumpForce;
 
@@ -24,6 +25,7 @@ namespace Com.Sungjin.FPSpractice
             baseFOV = normalCam.fieldOfView;
             Camera.main.enabled = false;
             rig = GetComponent<Rigidbody>();
+            orientation = transform.GetChild(0);
         }
 
 
@@ -50,14 +52,13 @@ namespace Com.Sungjin.FPSpractice
             }
 
             //Movements
-            Vector3 t_direction = new Vector3(t_hmove,0, t_vmove);
-            t_direction.Normalize();
+            Vector3 t_direction = new Vector3(t_hmove,0, t_vmove).normalized;
 
             float t_adjustSpeed = speed;
             if (isSprinting) t_adjustSpeed *= sprintModifier;
 
             
-            Vector3 t_targetVelocity= transform.TransformDirection(t_direction) * t_adjustSpeed * Time.deltaTime;
+            Vector3 t_targetVelocity= orientation.TransformDirection(t_direction) * t_adjustSpeed * Time.deltaTime;
             t_targetVelocity.y = rig.velocity.y;
             rig.velocity = t_targetVelocity;
 

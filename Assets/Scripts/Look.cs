@@ -8,71 +8,57 @@ namespace Com.Sungjin.FPSpractice
     public class Look : MonoBehaviour
     {
         public static bool cursorLocked = true;
-        public Transform player;
+        public Transform orientation;
         public Transform cams;
 
-        public float xSensitivity;
-        public float ySensitivity;
+        [Range(0, 100)] public float xSensitivity;
+        [Range(0, 100)] public float ySensitivity;
         public float maxAngle;
 
-        private Quaternion camCenter;
+        private float YClamp;
+        const float sensitivityConstant = 0.025f;
 
         void Start()
         {
-            camCenter = cams.localRotation;
-            
+            orientation = transform.GetChild(0);
         }
 
 
         void Update()
         {
-            SetY();
-            SetX();
+            SetXY();
             UpdateCursorLock();
         }
-        void SetX()
+
+        void SetXY()
         {
-            float t_input = Input.GetAxis("Mouse X") * xSensitivity * Time.deltaTime;
-            Quaternion t_adj = Quaternion.AngleAxis(t_input, -Vector3.up);
-            Quaternion t_delta = player.localRotation * t_adj;
+            // 마우스 입력
+            var mouseInput = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
 
-            player.localRotation = t_delta;
+            // 민감도가 적용된 마우스 X,Y 입력
+            var X = mouseInput.x * xSensitivity * sensitivityConstant;
+            var Y = mouseInput.y * ySensitivity * sensitivityConstant;
 
+            // 플레이어 시점 계산
+            var XDir = cams.localRotation.eulerAngles.y + X;
 
+            YClamp -= Y;
+            YClamp = Mathf.Clamp(YClamp, -maxAngle, maxAngle); //위 아래 제한
+
+            // 적용
+            orientation.localRotation = Quaternion.Euler(0, XDir, 0);
+            cams.localRotation = Quaternion.Euler(YClamp, XDir, 0);
         }
 
-        void SetY()
-        {
-            float t_input = Input.GetAxis("Mouse Y") * ySensitivity * Time.deltaTime;
-            Quaternion t_adj = Quaternion.AngleAxis(t_input,-Vector3.right);
-            Quaternion t_delta = cams.localRotation * t_adj;
-            if (Quaternion.Angle(camCenter, t_delta) < maxAngle)
-            {
-                cams.localRotation = t_delta;
-
-            }
-        }
         void UpdateCursorLock()
         {
-            if (cursorLocked)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-                if (Input.GetKeyDown(KeyCode.Escape))
-                {
-                    cursorLocked = false;
-                }
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-                if (Input.GetKeyDown(KeyCode.Escape))
-                {
-                    cursorLocked = true;
-                }
-            }
-
-            }
+            // 키 체킹
+            if (Input.GetKeyDown(KeyCode.Escape)) cursorLocked = !cursorLocked;
+            
+            // 마우스 상태 변경 
+            Cursor.lockState = cursorLocked ? CursorLockMode.Locked : CursorLockMode.None;
+            Cursor.visible = !cursorLocked;
         }
     }
+
+}
